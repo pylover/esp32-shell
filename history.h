@@ -2,27 +2,22 @@
 #define HISTORY_H_
 
 
-#include "ush.h"
+struct ush_history {
+    int head;
+    int tail;
+    int offset;
+    int mask;
+    unsigned int max;
+    char *commands[];
+};
 
 
-void
-history_init(struct ush *sh);
-
-
-void
-history_alloc(struct ush *sh);
-
-
-void
-history_updatecurrent(struct ush *sh);
-
-
-int
-history_prev(struct ush *sh);
+struct ush_history *
+history_create(unsigned int maskbits);
 
 
 int
-history_next(struct ush *sh);
+history_dispose(struct ush_history *h);
 
 
 #endif  // HISTORY_H_

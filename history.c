@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <string.h>
 
 #include <elog.h>
 
@@ -28,93 +29,41 @@
 #define HISTORY_USED(h) HISTORY_MASK((h)->head - (h)->tail)
 #define HISTORY_FREE(h) (HISTORY_MASK((h)->tail - (h)->head) - 1)
 #define HISTORY_INCR(x) HISTORY_MASK((x) + 1)
-#define HISTORY_HEADOFF(sh) \
-    HISTORY_MASK((sh)->history.head + (sh)->historyoffset)
-#define HISTORY_CURRENT(sh) (sh)->history.commands[HISTORY_HEADOFF(sh)]
+#define HISTORY_HEADOFF(h) HISTORY_MASK((h)->head + (h)->offset)
+#define HISTORY_CURRENT(h) (h)->commands[HISTORY_HEADOFF(h)]
 
 
-void
-history_init(struct ush *sh) {
-    memset(&sh->history, 0, sizeof(sh->history));
-    sh->historyoffset = 0;
-}
+struct ush_history *
+history_create(unsigned int maskbits) {
+    struct ush_history *h;
+    unsigned int max;
+    size_t size;
 
-
-void
-history_alloc(struct ush *sh) {
-    struct ush_history *h = &sh->history;
-
-    if (!HISTORY_FREE(h)) {
-        /* tail drop */
-        h->tail = HISTORY_INCR(h->tail);
+    if ((maskbits == 0) || (maskbits >= (sizeof(unsigned int) * 8))) {
+        return NULL;
     }
 
-    h->head = HISTORY_INCR(h->head);
-    sh->historyoffset = 0;
-    char *cur = HISTORY_CURRENT(sh);
-    if (cur) {
-        free(cur);
-        HISTORY_CURRENT(sh) = NULL;
-    }
-}
-
-
-void
-history_updatecurrent(struct ush *sh) {
-    if (sh->cmdsize == 0) {
-        return;
-    }
-    int newsize = sh->cmdsize + 1;
-    char *cur = HISTORY_CURRENT(sh);
-
-    if (cur == NULL) {
-        cur = malloc(newsize);
-    }
-    else if (strlen(cur) != newsize) {
-        cur = realloc(cur, newsize);
+    max = 1 << maskbits;
+    size = sizeof(struct ush_history) + max * sizeof(char*);
+    h = malloc(size);
+    if (h == NULL) {
+        return NULL;
     }
 
-    cur[newsize - 1] = '\0';
-    HISTORY_CURRENT(sh) = cur;
-    strncpy(cur, sh->cmdline, sh->cmdsize);
+    memset(h, 0, size);
+    h->max = max;
+    h->mask = max - 1;
+
+    return h;
 }
 
 
 int
-history_prev(struct ush *sh) {
-    struct ush_history *h = &sh->history;
-
-    if (HISTORY_USED(h) <= abs(sh->historyoffset)) {
-        return 0;
+history_dispose(struct ush_history *h) {
+    if (h == NULL) {
+        return -1;
     }
 
-    sh->historyoffset--;
-    char *cur = HISTORY_CURRENT(sh);
-    if (cur) {
-        strcpy(sh->cmdline, cur);
-        sh->cmdsize = strlen(cur);
-    }
-    else {
-        sh->cmdsize = 0;
-    }
-    return 1;
-}
-
-
-int
-history_next(struct ush *sh) {
-    if (!sh->historyoffset) {
-        return 0;
-    }
-
-    sh->historyoffset++;
-    char *cur = HISTORY_CURRENT(sh);
-    if (cur) {
-        strcpy(sh->cmdline, cur);
-        sh->cmdsize = strlen(cur);
-    }
-    else {
-        sh->cmdsize = 0;
-    }
-    return 1;
+    free(h);
+    return 0;
 }

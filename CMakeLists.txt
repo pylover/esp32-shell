@@ -1,7 +1,8 @@
 set(sources
   "ush.c"
-  "term.c"
+  "cmdline.c"
   "history.c"
+  # "term.c"
 )
 
 

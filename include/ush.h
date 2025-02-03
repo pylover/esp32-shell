@@ -26,29 +26,13 @@ struct ush_command {
 };
 
 
-struct ush_history {
-    int head;
-    int tail;
-    char *commands[CONFIG_USH_HISTORY_MASK + 1];
-};
-
-
 typedef struct ush {
     /* console */
     struct euart console;
+    struct euart_read reader;
 
-    /* typing */
-#ifdef CONFIG_USH_VIMODE
-    bool insertmode;
-#endif
-    char currentchar;
-    char cmdline[CONFIG_USH_CMDLINE_MAX + 1];
-    unsigned int cmdsize;
-    unsigned int cursor;
-
-    /* history */
-    int historyoffset;
-    struct ush_history history;
+    struct ush_cmdline *cmdline;
+    struct ush_history *history;
 
     /* user provided command vector */
     struct ush_command commands[];

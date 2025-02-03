@@ -1,9 +1,9 @@
 menu "ush"
-	config USH_HISTORY_MASK
-		int "ush history mask (buffer size - 1)."
+    config USH_HISTORY_MASKBITS
+		int "ush history mask bits count, 3 means 2 ^ 3 - 1 = 7, default 7."
         default 7
 	
-	config USH_CMDLINE_MAX
+	config USH_CMDLINE_MAXCHARS
 		int "ush command line buffer size"
         default 256
 
@@ -11,5 +11,8 @@ menu "ush"
 		bool "vi editing moe"
 		default y
 
-	config USH_CMDLINE
+	config USH_READER_CHUNKSIZE
+		int "ush console reader chunksize"
+		default 32
+
 endmenu

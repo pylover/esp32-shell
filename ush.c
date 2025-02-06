@@ -26,13 +26,14 @@ _init(struct ush *sh) {
     struct ush_history *h = NULL;
     struct ush_cmdline *c = NULL;
 
-    memset(&sh->reader, 0, sizeof(struct euart_read));
-    sh->reader.timeout_us = 0;
-    sh->reader.max = CONFIG_USH_CMDLINE_MAXCHARS;
+    memset(&sh->reader, 0, sizeof(struct euart_reader));
     sh->reader.buff = malloc(CONFIG_USH_READER_CHUNKSIZE + 1);
     if (sh->reader.buff == NULL) {
         return -1;
     }
+    sh->reader.timeout_us = 0;
+    sh->reader.max = CONFIG_USH_CMDLINE_MAXCHARS;
+    sh->reader.device = &sh->console;
 
     h = history_create(CONFIG_USH_HISTORY_MASKBITS);
     if (h == NULL) {
@@ -81,15 +82,21 @@ _deinit(struct ush *sh) {
 
 ASYNC
 ushA(struct uaio_task *self, struct ush *sh) {
-    // int ret;
+    struct euart_reader *r = &sh->reader;
     UAIO_BEGIN(self);
 
     /* initialization */
     if (_init(sh)) {
-        UAIO_THROW(self, ENOMEM);
+        UAIO_THROW2(self, ENOMEM);
     }
 
     /* loop */
+    while (true) {
+        DEBUG("Reading %d bytes", r->max);
+        r->bytes = 0;
+        EUART_AREAD(self, r);
+        DEBUG("STDIN(%d): %.*s", r->bytes, r->bytes, r->buff);
+    }
 
     /* termination */
     UAIO_FINALLY(self);

@@ -28,8 +28,8 @@ struct ush_command {
 
 typedef struct ush {
     /* console */
-    struct euart console;
-    struct euart_read reader;
+    struct euart_device console;
+    struct euart_reader reader;
 
     struct ush_cmdline *cmdline;
     struct ush_history *history;

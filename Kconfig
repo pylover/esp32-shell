@@ -1,18 +1,34 @@
 menu "ush"
+	config USH_READER_TIMEOUT_US
+		int "console reader timeout in microseconds."
+		default 1000
+	
+	config USH_READER_CHUNKSIZE
+		int "console reader chunksize in bytes"
+		default 32
+
     config USH_HISTORY_MASKBITS
-		int "ush history mask bits count, 3 means 2 ^ 3 - 1 = 7, default 7."
+		int "history mask bits count, 3 means 2 ^ 3 - 1 = 7, default 7."
         default 7
 	
 	config USH_CMDLINE_MAXCHARS
-		int "ush command line buffer size"
+		int "command line buffer size"
         default 256
 
 	config USH_VIMODE
 		bool "vi editing moe"
 		default y
 
-	config USH_READER_CHUNKSIZE
-		int "ush console reader chunksize"
-		default 32
+	choice 
+		prompt "linebreak"
+		default USH_LINEBREAK_LF
+
+	config USH_LINEBREAK_LF
+		bool "LF"
+
+	config USH_LINEBREAK_CRLF
+		bool "CRLF"
+		
+	endchoice
 
 endmenu

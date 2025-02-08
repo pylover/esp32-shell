@@ -4,10 +4,8 @@
 #include <elog.h>
 
 #include "ush.h"
-#include "cmdline.h"
-#include "history.h"
-// #include "char.h"
-// #include "term.h"
+#include "state.h"
+#include "console.h"
 
 
 #undef UAIO_ARG1
@@ -17,92 +15,68 @@
 #include "uaio_generic.c"
 
 
-#define NEED_ANY 0
-#define NEED_NOTHING -1
+struct ush *
+ush_create(struct euart_device *terminal, struct ush_command commands[]) {
+    struct ush *sh = NULL;
 
-
-static int
-_init(struct ush *sh) {
-    struct ush_history *h = NULL;
-    struct ush_cmdline *c = NULL;
-
-    memset(&sh->reader, 0, sizeof(struct euart_reader));
-    sh->reader.buff = malloc(CONFIG_USH_READER_CHUNKSIZE + 1);
-    if (sh->reader.buff == NULL) {
-        return -1;
+    if (terminal == NULL) {
+        return NULL;
     }
-    sh->reader.timeout_us = 0;
-    sh->reader.max = CONFIG_USH_CMDLINE_MAXCHARS;
-    sh->reader.device = &sh->console;
 
-    h = history_create(CONFIG_USH_HISTORY_MASKBITS);
-    if (h == NULL) {
+    sh = malloc(sizeof(struct ush));
+    if (sh == NULL) {
+        return NULL;
+    }
+
+    if (console_init(&sh->console, terminal)) {
         goto failed;
     }
-    sh->history = h;
 
-    c = cmdline_create(CONFIG_USH_CMDLINE_MAXCHARS);
-    if (c == NULL) {
-        goto failed;
-    }
-    sh->cmdline = c;
-
-    return 0;
+    sh->commands = commands;
+    return sh;
 
 failed:
-    if (sh->reader.buff) {
-        free(sh->reader.buff);
+    console_deinit(&sh->console);
+
+    if (sh) {
+        free(sh);
     }
 
-    if (h) {
-        free(h);
-    }
-
-    if (c) {
-        free(c);
-    }
-
-    return -1;
+    return NULL;
 }
 
 
-static int
-_deinit(struct ush *sh) {
+int
+ush_destroy(struct ush *sh) {
     int ret = 0;
 
     if (sh == NULL) {
         return -1;
     }
 
-    ret |= history_dispose(sh->history);
-    ret |= cmdline_dispose(sh->cmdline);
+    ret |= console_deinit(&sh->console);
+
+    free(sh);
     return ret;
 }
 
 
 ASYNC
 ushA(struct uaio_task *self, struct ush *sh) {
-    struct euart_reader *r = &sh->reader;
     UAIO_BEGIN(self);
 
-    /* initialization */
-    if (_init(sh)) {
-        UAIO_THROW2(self, ENOMEM);
-    }
-
     /* loop */
+    DEBUG("linebreak: %d", CR[0]);
+    // console_printf(&sh->console, CR);
     while (true) {
-        DEBUG("Reading %d bytes", r->max);
-        r->bytes = 0;
-        EUART_AREAD(self, r);
-        DEBUG("STDIN(%d): %.*s", r->bytes, r->bytes, r->buff);
+        DEBUG("linebreak: %d", CR[0]);
+        // r->bytes = 0;
+        // EUART_AREAD(self, r);
+        // DEBUG("STDIN: %d", r->bytes);
     }
 
     /* termination */
     UAIO_FINALLY(self);
-    if (_deinit(sh)) {
-        ERROR("_deinit");
-    }
 
 // prompt:
 //     printf("\033[0m");

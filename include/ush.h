@@ -6,6 +6,21 @@
 #include <uaio.h>
 
 
+#ifdef CONFIG_USH_LINEBREAK_LF
+#define CR "\n"
+#elif CONFIG_USH_LINEBREAK_CRLF
+#define CR "\r\n"
+#endif
+
+
+typedef struct ush ush_t;
+#undef UAIO_ARG1
+#undef UAIO_ARG2
+#undef UAIO_ENTITY
+#define UAIO_ENTITY ush
+#include "uaio_generic.h"
+
+
 typedef struct ush_process {
     int argc;
     char **argv;
@@ -26,24 +41,12 @@ struct ush_command {
 };
 
 
-typedef struct ush {
-    /* console */
-    struct euart_device console;
-    struct euart_reader reader;
-
-    struct ush_cmdline *cmdline;
-    struct ush_history *history;
-
-    /* user provided command vector */
-    struct ush_command commands[];
-} ush_t;
+struct ush *
+ush_create(struct euart_device *console, struct ush_command commands[]);
 
 
-#undef UAIO_ARG1
-#undef UAIO_ARG2
-#undef UAIO_ENTITY
-#define UAIO_ENTITY ush
-#include "uaio_generic.h"
+int
+ush_destroy(struct ush *sh);
 
 
 ASYNC

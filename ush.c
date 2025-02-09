@@ -63,16 +63,16 @@ ush_destroy(struct ush *sh) {
 
 ASYNC
 ushA(struct uaio_task *self, struct ush *sh) {
+    struct euart_reader *r = &sh->console.reader;
     UAIO_BEGIN(self);
 
     /* loop */
-    DEBUG("linebreak: %d", CR[0]);
-    // console_printf(&sh->console, CR);
+    console_printf(&sh->console, LINEBREAK);
     while (true) {
-        DEBUG("linebreak: %d", CR[0]);
-        // r->bytes = 0;
-        // EUART_AREAD(self, r);
-        // DEBUG("STDIN: %d", r->bytes);
+        console_printf(&sh->console, LINEBREAK);
+        console_prompt(&sh->console);
+        CONSOLE_AREAD(self, &sh->console, 3);
+        DEBUG("STDIN: %d -- %.*s", r->bytes, r->bytes, r->buff);
     }
 
     /* termination */

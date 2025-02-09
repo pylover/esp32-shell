@@ -7,9 +7,9 @@
 
 
 #ifdef CONFIG_USH_LINEBREAK_LF
-#define CR "\n"
+#define LINEBREAK "\n"
 #elif CONFIG_USH_LINEBREAK_CRLF
-#define CR "\r\n"
+#define LINEBREAK "\r\n"
 #endif
 
 

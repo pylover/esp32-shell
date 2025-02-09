@@ -7,9 +7,16 @@
 #include "ush.h"
 
 
-struct console {
+typedef struct console {
     struct euart_reader reader;
-};
+} console_t;
+
+
+#undef UAIO_ARG1
+#undef UAIO_ARG2
+#undef UAIO_ENTITY
+#define UAIO_ENTITY console
+#include "uaio_generic.h"
 
 
 struct history {
